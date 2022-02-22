@@ -23,3 +23,6 @@ jobs:
 
       - name: Test with Gradle
         run: ./gradlew test
+
+      - name: Check format
+        run: ./gradlew spotlessCheck
