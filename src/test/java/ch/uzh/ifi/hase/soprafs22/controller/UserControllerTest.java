@@ -19,10 +19,12 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.web.server.ResponseStatusException;
@@ -31,7 +33,8 @@ import org.springframework.web.server.ResponseStatusException;
  * UserControllerTest This is a WebMvcTest which allows to test the UserController i.e. GET/POST
  * request without actually sending them over the network. This tests if the UserController works.
  */
-@WebMvcTest(UserController.class)
+@SpringBootTest
+@AutoConfigureMockMvc
 public class UserControllerTest {
 
   @Autowired private MockMvc mockMvc;
@@ -39,6 +42,7 @@ public class UserControllerTest {
   @MockBean private UserService userService;
 
   @Test
+  @WithMockUser
   public void givenUsers_whenGetUsers_thenReturnJsonArray() throws Exception {
     // given
     User user = new User();
@@ -79,6 +83,7 @@ public class UserControllerTest {
     UserPostDTO userPostDTO = new UserPostDTO();
     userPostDTO.setName("Test User");
     userPostDTO.setUsername("testUsername");
+    userPostDTO.setPassword("test");
 
     given(userService.createUser(Mockito.any())).willReturn(user);
 
