@@ -29,7 +29,12 @@ public class Application {
     return new WebMvcConfigurer() {
       @Override
       public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/**").allowedOrigins("*").allowedMethods("*");
+        registry
+            .addMapping("/**")
+            .allowedOrigins(
+                "http://localhost:3000", "https://sopra-fs22-bachmann-lucius-cli.herokuapp.com")
+            .allowCredentials(true)
+            .allowedMethods("*");
       }
     };
   }

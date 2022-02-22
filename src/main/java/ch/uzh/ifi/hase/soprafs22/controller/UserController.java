@@ -9,7 +9,10 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
@@ -26,10 +29,13 @@ public class UserController {
 
   private final UserService userService;
 
+  private final AuthHelper authHelper;
+
   @Autowired
-  UserController(PasswordEncoder passwordEncoder, UserService userService) {
+  UserController(PasswordEncoder passwordEncoder, UserService userService, AuthHelper authHelper) {
     this.passwordEncoder = passwordEncoder;
     this.userService = userService;
+    this.authHelper = authHelper;
   }
 
   @GetMapping("/users")
@@ -50,9 +56,9 @@ public class UserController {
 
   @PostMapping("/users")
   @ResponseStatus(HttpStatus.CREATED)
-  @ResponseBody
-  public UserGetDTO createUser(@Valid @RequestBody UserPostDTO userPostDTO) {
-    String hashedPassword = passwordEncoder.encode(userPostDTO.getPassword());
+  public ResponseEntity<UserGetDTO> createUser(@Valid @RequestBody UserPostDTO userPostDTO) {
+    String loginPassword = userPostDTO.getPassword();
+    String hashedPassword = passwordEncoder.encode(loginPassword);
     userPostDTO.setPassword(hashedPassword);
     // convert API user to internal representation
     User userInput = DTOMapper.INSTANCE.convertUserPostDTOtoEntity(userPostDTO);
@@ -61,6 +67,10 @@ public class UserController {
     User createdUser = userService.createUser(userInput);
 
     // convert internal representation of user back to API
-    return DTOMapper.INSTANCE.convertEntityToUserGetDTO(createdUser);
+    UserGetDTO userGetDTO = DTOMapper.INSTANCE.convertEntityToUserGetDTO(createdUser);
+    ResponseCookie cookie = authHelper.createCookieFor(userPostDTO.getUsername(), loginPassword);
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .header(HttpHeaders.SET_COOKIE, cookie.toString())
+        .body(userGetDTO);
   }
 }
