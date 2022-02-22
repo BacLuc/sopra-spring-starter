@@ -5,9 +5,13 @@ import ch.uzh.ifi.hase.soprafs22.rest.dto.UserGetDTO;
 import ch.uzh.ifi.hase.soprafs22.rest.dto.UserPostDTO;
 import ch.uzh.ifi.hase.soprafs22.rest.mapper.DTOMapper;
 import ch.uzh.ifi.hase.soprafs22.service.UserService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,15 +25,20 @@ import java.util.List;
 @RestController
 public class UserController {
 
+    private final PasswordEncoder passwordEncoder;
+
   private final UserService userService;
 
-  UserController(UserService userService) {
-    this.userService = userService;
+  @Autowired
+  UserController(PasswordEncoder passwordEncoder, UserService userService) {
+      this.passwordEncoder = passwordEncoder;
+      this.userService = userService;
   }
 
   @GetMapping("/users")
   @ResponseStatus(HttpStatus.OK)
   @ResponseBody
+  @PreAuthorize("hasRole('USER')")
   public List<UserGetDTO> getAllUsers() {
     // fetch all users in the internal representation
     List<User> users = userService.getUsers();
@@ -45,8 +54,10 @@ public class UserController {
   @PostMapping("/users")
   @ResponseStatus(HttpStatus.CREATED)
   @ResponseBody
-  public UserGetDTO createUser(@RequestBody UserPostDTO userPostDTO) {
-    // convert API user to internal representation
+  public UserGetDTO createUser(@Valid @RequestBody UserPostDTO userPostDTO) {
+      String hashedPassword = passwordEncoder.encode(userPostDTO.getPassword());
+      userPostDTO.setPassword(hashedPassword);
+      // convert API user to internal representation
     User userInput = DTOMapper.INSTANCE.convertUserPostDTOtoEntity(userPostDTO);
 
     // create user
