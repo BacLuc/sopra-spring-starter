@@ -1,19 +1,14 @@
 package ch.uzh.ifi.hase.soprafs22.entity;
 
 import ch.uzh.ifi.hase.soprafs22.constant.UserStatus;
-
-import javax.persistence.*;
 import java.io.Serializable;
+import javax.persistence.*;
 
 /**
- * Internal User Representation
- * This class composes the internal representation of the user and defines how
- * the user is stored in the database.
- * Every variable will be mapped into a database field with the @Column
- * annotation
- * - nullable = false -> this cannot be left empty
- * - unique = true -> this value must be unqiue across the database -> composes
- * the primary key
+ * Internal User Representation This class composes the internal representation of the user and
+ * defines how the user is stored in the database. Every variable will be mapped into a database
+ * field with the @Column annotation - nullable = false -> this cannot be left empty - unique = true
+ * -> this value must be unqiue across the database -> composes the primary key
  */
 @Entity
 @Table(name = "USER")
@@ -21,9 +16,7 @@ public class User implements Serializable {
 
   private static final long serialVersionUID = 1L;
 
-  @Id
-  @GeneratedValue
-  private Long id;
+  @Id @GeneratedValue private Long id;
 
   @Column(nullable = false)
   private String name;
@@ -80,11 +73,11 @@ public class User implements Serializable {
     this.status = status;
   }
 
-    public String getPasswordHash() {
-        return passwordHash;
-    }
+  public String getPasswordHash() {
+    return passwordHash;
+  }
 
-    public void setPasswordHash(String passwordHash) {
-        this.passwordHash = passwordHash;
-    }
+  public void setPasswordHash(String passwordHash) {
+    this.passwordHash = passwordHash;
+  }
 }
