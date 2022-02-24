@@ -1,6 +1,7 @@
 package ch.uzh.ifi.hase.soprafs22.controller;
 
 import ch.uzh.ifi.hase.soprafs22.entity.User;
+import ch.uzh.ifi.hase.soprafs22.exceptions.NotFoundException;
 import ch.uzh.ifi.hase.soprafs22.rest.dto.UserGetDTO;
 import ch.uzh.ifi.hase.soprafs22.rest.dto.UserPostDTO;
 import ch.uzh.ifi.hase.soprafs22.rest.mapper.DTOMapper;
@@ -36,6 +37,18 @@ public class UserController {
     this.passwordEncoder = passwordEncoder;
     this.userService = userService;
     this.authHelper = authHelper;
+  }
+
+  @GetMapping("/users/{id}")
+  @ResponseStatus(HttpStatus.OK)
+  @ResponseBody
+  @PreAuthorize("hasRole('USER')")
+  public UserGetDTO getUser(@Valid @PathVariable Long id) throws NotFoundException {
+    User user =
+        userService
+            .getById(id)
+            .orElseThrow(() -> new NotFoundException("user with id %s not found".formatted(id)));
+    return DTOMapper.INSTANCE.convertEntityToUserGetDTO(user);
   }
 
   @GetMapping("/users")
