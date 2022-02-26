@@ -1,7 +1,7 @@
 package ch.uzh.ifi.hase.soprafs22.controller;
 
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.*;
 import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -13,6 +13,7 @@ import ch.uzh.ifi.hase.soprafs22.entity.User;
 import ch.uzh.ifi.hase.soprafs22.repository.UserRepository;
 import ch.uzh.ifi.hase.soprafs22.rest.dto.UserGetDTO;
 import ch.uzh.ifi.hase.soprafs22.rest.dto.UserPostDTO;
+import ch.uzh.ifi.hase.soprafs22.rest.dto.UserPutDTO;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDate;
@@ -39,6 +40,7 @@ import org.springframework.web.server.ResponseStatusException;
 @AutoConfigureMockMvc
 public class UserControllerTest {
   private static final LocalDate SOME_BIRTHDAY = LocalDate.parse("2022-01-02");
+  private static final LocalDate ANOTHER_BIRTHDAY = LocalDate.parse("2022-01-03");
 
   @Autowired private MockMvc mockMvc;
 
@@ -144,6 +146,139 @@ public class UserControllerTest {
         .andExpect(jsonPath("$.name", is(userPostDTO.getName())))
         .andExpect(jsonPath("$.username", is(userPostDTO.getUsername())))
         .andExpect(jsonPath("$.status", is(UserStatus.OFFLINE.name())));
+  }
+
+  @Test
+  public void httpstatus_401_for_put_user_item_when_not_logged_in() throws Exception {
+    mockMvc
+        .perform(put("/users/1").contentType(MediaType.APPLICATION_JSON).content(""))
+        .andExpect(status().isUnauthorized());
+  }
+
+  @Test
+  @WithMockUser
+  public void httpstatus_404_for_put_user_item_when_not_found() throws Exception {
+    UserPutDTO userPutDTO = new UserPutDTO();
+    mockMvc
+        .perform(
+            put("/users/100004")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(asJsonString(userPutDTO)))
+        .andExpect(status().isNotFound());
+  }
+
+  @Test
+  @WithMockUser
+  public void update_username_and_birthday_if_both_given() throws Exception {
+    List<User> users = userRepository.findAll();
+    User firstUser = users.get(0);
+    String newUserName = "new name";
+    UserPutDTO userPutDTO = new UserPutDTO(newUserName, ANOTHER_BIRTHDAY);
+    mockMvc
+        .perform(
+            put("/users/%s".formatted(firstUser.getId()))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(asJsonString(userPutDTO)))
+        .andExpect(status().isNoContent());
+
+    User updatedUser = userRepository.findById(firstUser.getId()).orElseThrow();
+    assertThat(updatedUser.getUsername(), is(newUserName));
+    assertThat(updatedUser.getBirthday(), is(ANOTHER_BIRTHDAY));
+  }
+
+  @Test
+  @WithMockUser
+  public void update_only_birthday() throws Exception {
+    List<User> users = userRepository.findAll();
+    User firstUser = users.get(0);
+    UserPutDTO userPutDTO = new UserPutDTO(null, ANOTHER_BIRTHDAY);
+    mockMvc
+        .perform(
+            put("/users/%s".formatted(firstUser.getId()))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(asJsonString(userPutDTO)))
+        .andExpect(status().isNoContent());
+
+    User updatedUser = userRepository.findById(firstUser.getId()).orElseThrow();
+    assertThat(updatedUser.getUsername(), is(notNullValue()));
+    assertThat(updatedUser.getBirthday(), is(ANOTHER_BIRTHDAY));
+  }
+
+  @Test
+  @WithMockUser
+  public void update_only_username_if_birthday_is_null() throws Exception {
+    List<User> users = userRepository.findAll();
+    User firstUser = users.get(0);
+    String newUserName = "new name";
+    UserPutDTO userPutDTO = new UserPutDTO(newUserName, null);
+    mockMvc
+        .perform(
+            put("/users/%s".formatted(firstUser.getId()))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(asJsonString(userPutDTO)))
+        .andExpect(status().isNoContent());
+
+    User updatedUser = userRepository.findById(firstUser.getId()).orElseThrow();
+    assertThat(updatedUser.getUsername(), is(newUserName));
+    assertThat(updatedUser.getBirthday(), is(notNullValue()));
+  }
+
+  @Test
+  @WithMockUser
+  public void update_only_username_if_birthday_is_missing() throws Exception {
+    List<User> users = userRepository.findAll();
+    User firstUser = users.get(0);
+    String newUserName = "new name";
+    mockMvc
+        .perform(
+            put("/users/%s".formatted(firstUser.getId()))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"username\":\"%s\"}".formatted(newUserName)))
+        .andExpect(status().isNoContent());
+
+    User updatedUser = userRepository.findById(firstUser.getId()).orElseThrow();
+    assertThat(updatedUser.getUsername(), is(newUserName));
+    assertThat(updatedUser.getBirthday(), is(notNullValue()));
+  }
+
+  @Test
+  @WithMockUser
+  public void update_only_birthday_if_username_is_missing() throws Exception {
+    List<User> users = userRepository.findAll();
+    User firstUser = users.get(0);
+    mockMvc
+        .perform(
+            put("/users/%s".formatted(firstUser.getId()))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"birthday\":\"%s\"}".formatted(ANOTHER_BIRTHDAY.toString())))
+        .andExpect(status().isNoContent());
+
+    User updatedUser = userRepository.findById(firstUser.getId()).orElseThrow();
+    assertThat(updatedUser.getUsername(), is(notNullValue()));
+    assertThat(updatedUser.getBirthday(), is(ANOTHER_BIRTHDAY));
+  }
+
+  @Test
+  @WithMockUser
+  public void update_validates_date_format() throws Exception {
+    List<User> users = userRepository.findAll();
+    User firstUser = users.get(0);
+    mockMvc
+        .perform(
+            put("/users/%s".formatted(firstUser.getId()))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"birthday\":\"20-2\"}"))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  @WithMockUser
+  public void update_checks_content_type() throws Exception {
+    List<User> users = userRepository.findAll();
+    User firstUser = users.get(0);
+    mockMvc
+        .perform(put("/users/%s".formatted(firstUser.getId())).content("{\"birthday\":\"20-2\"}"))
+        .andExpect(status().isUnsupportedMediaType());
   }
 
   /**

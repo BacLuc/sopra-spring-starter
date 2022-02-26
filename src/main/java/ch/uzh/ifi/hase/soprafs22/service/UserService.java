@@ -40,6 +40,11 @@ public class UserService {
     return this.userRepository.findAll();
   }
 
+  public void saveUser(User user) {
+    userRepository.save(user);
+    userRepository.flush();
+  }
+
   public User createUser(User newUser) {
     newUser.setToken(UUID.randomUUID().toString());
     newUser.setStatus(UserStatus.OFFLINE);

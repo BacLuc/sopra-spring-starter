@@ -4,16 +4,14 @@ import ch.uzh.ifi.hase.soprafs22.entity.User;
 import ch.uzh.ifi.hase.soprafs22.exceptions.NotFoundException;
 import ch.uzh.ifi.hase.soprafs22.rest.dto.UserGetDTO;
 import ch.uzh.ifi.hase.soprafs22.rest.dto.UserPostDTO;
+import ch.uzh.ifi.hase.soprafs22.rest.dto.UserPutDTO;
 import ch.uzh.ifi.hase.soprafs22.rest.mapper.DTOMapper;
 import ch.uzh.ifi.hase.soprafs22.service.UserService;
 import java.util.ArrayList;
 import java.util.List;
 import javax.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseCookie;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
@@ -85,5 +83,22 @@ public class UserController {
     return ResponseEntity.status(HttpStatus.CREATED)
         .header(HttpHeaders.SET_COOKIE, cookie.toString())
         .body(userGetDTO);
+  }
+
+  @PutMapping(value = "/users/{id}", consumes = "application/json")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  public void putUser(@Valid @PathVariable Long id, @Valid @RequestBody UserPutDTO userPutDTO)
+      throws NotFoundException {
+    User user =
+        userService
+            .getById(id)
+            .orElseThrow(() -> new NotFoundException("user with id %s not found".formatted(id)));
+    if (userPutDTO.getUsername() != null) {
+      user.setUsername(userPutDTO.getUsername());
+    }
+    if (userPutDTO.getBirthday() != null) {
+      user.setBirthday(userPutDTO.getBirthday());
+    }
+    userService.saveUser(user);
   }
 }
