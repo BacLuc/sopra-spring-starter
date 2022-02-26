@@ -4,9 +4,10 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.Mockito.when;
+import static org.springframework.http.HttpHeaders.CONTENT_TYPE;
+import static org.springframework.http.MediaType.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import ch.uzh.ifi.hase.soprafs22.constant.UserStatus;
 import ch.uzh.ifi.hase.soprafs22.entity.User;
@@ -25,7 +26,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
@@ -76,16 +76,22 @@ public class UserControllerTest {
 
   @Test
   @WithMockUser
+  public void get_users_validates_accept_header() throws Exception {
+    mockMvc.perform(get("/users").accept(IMAGE_GIF)).andExpect(status().isNotAcceptable());
+  }
+
+  @Test
+  @WithMockUser
   public void givenUsers_whenGetUsers_thenReturnJsonArray() throws Exception {
     List<User> allUsers = userRepository.findAll();
     // when
-    MockHttpServletRequestBuilder getRequest =
-        get("/users").contentType(MediaType.APPLICATION_JSON);
+    MockHttpServletRequestBuilder getRequest = get("/users").accept(APPLICATION_JSON);
 
     // then
     mockMvc
         .perform(getRequest)
         .andExpect(status().isOk())
+        .andExpect(header().string(CONTENT_TYPE, APPLICATION_JSON.toString()))
         .andExpect(jsonPath("$", hasSize(1)))
         .andExpect(jsonPath("$[0].id", is(allUsers.get(0).getId().intValue())))
         .andExpect(jsonPath("$[0].name", is(user1.getName())))
@@ -107,6 +113,14 @@ public class UserControllerTest {
 
   @Test
   @WithMockUser
+  public void get_single_user_validates_accept_header() throws Exception {
+    mockMvc
+        .perform(get("/users/%s".formatted(user1.getId())).accept(IMAGE_GIF))
+        .andExpect(status().isNotAcceptable());
+  }
+
+  @Test
+  @WithMockUser
   public void return_200_and_single_user_if_valid() throws Exception {
     String response =
         mockMvc
@@ -121,10 +135,33 @@ public class UserControllerTest {
     mockMvc
         .perform(get("/users/%s".formatted(userGetDTOs[0].getId())))
         .andExpect(status().isOk())
+        .andExpect(header().string(CONTENT_TYPE, APPLICATION_JSON.toString()))
         .andExpect(jsonPath("$.name", is(user1.getName())))
         .andExpect(jsonPath("$.username", is(user1.getUsername())))
         .andExpect(jsonPath("$.status", is(user1.getStatus().toString())))
         .andExpect(jsonPath("$.birthday", is(user1.getBirthday().toString())));
+  }
+
+  @Test
+  public void createUser_validates_contentType() throws Exception {
+    mockMvc
+        .perform(post("/users").accept(APPLICATION_JSON).content(APPLICATION_XML_VALUE))
+        .andExpect(status().isUnsupportedMediaType());
+  }
+
+  @Test
+  public void createUser_validates_accept() throws Exception {
+    UserPostDTO userPostDTO = new UserPostDTO();
+    userPostDTO.setName("Test User");
+    userPostDTO.setUsername("testUsername");
+    userPostDTO.setPassword("test");
+    mockMvc
+        .perform(
+            post("/users")
+                .accept(IMAGE_GIF)
+                .contentType(APPLICATION_JSON)
+                .content(asJsonString(userPostDTO)))
+        .andExpect(status().isNotAcceptable());
   }
 
   @Test
@@ -136,12 +173,16 @@ public class UserControllerTest {
 
     // when/then -> do the request + validate the result
     MockHttpServletRequestBuilder postRequest =
-        post("/users").contentType(MediaType.APPLICATION_JSON).content(asJsonString(userPostDTO));
+        post("/users")
+            .contentType(APPLICATION_JSON)
+            .accept(APPLICATION_JSON)
+            .content(asJsonString(userPostDTO));
 
     // then
     mockMvc
         .perform(postRequest)
         .andExpect(status().isCreated())
+        .andExpect(header().string(CONTENT_TYPE, APPLICATION_JSON.toString()))
         .andExpect(jsonPath("$.id", is(3)))
         .andExpect(jsonPath("$.name", is(userPostDTO.getName())))
         .andExpect(jsonPath("$.username", is(userPostDTO.getUsername())))
@@ -151,7 +192,7 @@ public class UserControllerTest {
   @Test
   public void httpstatus_401_for_put_user_item_when_not_logged_in() throws Exception {
     mockMvc
-        .perform(put("/users/1").contentType(MediaType.APPLICATION_JSON).content(""))
+        .perform(put("/users/1").accept(APPLICATION_JSON).contentType(APPLICATION_JSON).content(""))
         .andExpect(status().isUnauthorized());
   }
 
@@ -161,9 +202,7 @@ public class UserControllerTest {
     UserPutDTO userPutDTO = new UserPutDTO();
     mockMvc
         .perform(
-            put("/users/100004")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(asJsonString(userPutDTO)))
+            put("/users/100004").contentType(APPLICATION_JSON).content(asJsonString(userPutDTO)))
         .andExpect(status().isNotFound());
   }
 
@@ -177,7 +216,7 @@ public class UserControllerTest {
     mockMvc
         .perform(
             put("/users/%s".formatted(firstUser.getId()))
-                .contentType(MediaType.APPLICATION_JSON)
+                .contentType(APPLICATION_JSON)
                 .content(asJsonString(userPutDTO)))
         .andExpect(status().isNoContent());
 
@@ -195,7 +234,7 @@ public class UserControllerTest {
     mockMvc
         .perform(
             put("/users/%s".formatted(firstUser.getId()))
-                .contentType(MediaType.APPLICATION_JSON)
+                .contentType(APPLICATION_JSON)
                 .content(asJsonString(userPutDTO)))
         .andExpect(status().isNoContent());
 
@@ -214,7 +253,7 @@ public class UserControllerTest {
     mockMvc
         .perform(
             put("/users/%s".formatted(firstUser.getId()))
-                .contentType(MediaType.APPLICATION_JSON)
+                .contentType(APPLICATION_JSON)
                 .content(asJsonString(userPutDTO)))
         .andExpect(status().isNoContent());
 
@@ -232,7 +271,7 @@ public class UserControllerTest {
     mockMvc
         .perform(
             put("/users/%s".formatted(firstUser.getId()))
-                .contentType(MediaType.APPLICATION_JSON)
+                .contentType(APPLICATION_JSON)
                 .content("{\"username\":\"%s\"}".formatted(newUserName)))
         .andExpect(status().isNoContent());
 
@@ -249,7 +288,7 @@ public class UserControllerTest {
     mockMvc
         .perform(
             put("/users/%s".formatted(firstUser.getId()))
-                .contentType(MediaType.APPLICATION_JSON)
+                .contentType(APPLICATION_JSON)
                 .content("{\"birthday\":\"%s\"}".formatted(ANOTHER_BIRTHDAY.toString())))
         .andExpect(status().isNoContent());
 
@@ -266,7 +305,7 @@ public class UserControllerTest {
     mockMvc
         .perform(
             put("/users/%s".formatted(firstUser.getId()))
-                .contentType(MediaType.APPLICATION_JSON)
+                .contentType(APPLICATION_JSON)
                 .content("{\"birthday\":\"20-2\"}"))
         .andExpect(status().isBadRequest());
   }
