@@ -2,6 +2,7 @@ package ch.uzh.ifi.hase.soprafs22.entity;
 
 import ch.uzh.ifi.hase.soprafs22.constant.UserStatus;
 import java.io.Serializable;
+import java.time.LocalDate;
 import javax.persistence.*;
 
 /**
@@ -29,6 +30,8 @@ public class User implements Serializable {
 
   @Column(nullable = false, unique = true)
   private String token;
+
+  @Column private LocalDate birthday;
 
   @Column(nullable = false)
   private UserStatus status;
@@ -63,6 +66,14 @@ public class User implements Serializable {
 
   public void setToken(String token) {
     this.token = token;
+  }
+
+  public LocalDate getBirthday() {
+    return birthday;
+  }
+
+  public void setBirthday(LocalDate birthday) {
+    this.birthday = birthday;
   }
 
   public UserStatus getStatus() {

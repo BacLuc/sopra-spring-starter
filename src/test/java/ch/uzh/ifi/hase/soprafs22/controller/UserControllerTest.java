@@ -16,6 +16,7 @@ import ch.uzh.ifi.hase.soprafs22.rest.dto.UserPostDTO;
 import ch.uzh.ifi.hase.soprafs22.service.UserService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -40,12 +41,15 @@ import org.springframework.web.server.ResponseStatusException;
 @SpringBootTest
 @AutoConfigureMockMvc
 public class UserControllerTest {
+  private static final LocalDate SOME_BIRTHDAY = LocalDate.parse("2022-01-02");
 
   @Autowired private MockMvc mockMvc;
 
   @MockBean private UserService userService;
 
   @MockBean private AuthHelper authHelper;
+
+  @Autowired private ObjectMapper objectMapper;
 
   @BeforeEach
   void setUp() {
@@ -61,6 +65,7 @@ public class UserControllerTest {
     user.setName("Firstname Lastname");
     user.setUsername("firstname@lastname");
     user.setStatus(UserStatus.OFFLINE);
+    user.setBirthday(SOME_BIRTHDAY);
 
     List<User> allUsers = Collections.singletonList(user);
 
@@ -79,7 +84,8 @@ public class UserControllerTest {
         .andExpect(jsonPath("$", hasSize(1)))
         .andExpect(jsonPath("$[0].name", is(user.getName())))
         .andExpect(jsonPath("$[0].username", is(user.getUsername())))
-        .andExpect(jsonPath("$[0].status", is(user.getStatus().toString())));
+        .andExpect(jsonPath("$[0].status", is(user.getStatus().toString())))
+        .andExpect(jsonPath("$[0].birthday", is(user.getBirthday().toString())));
   }
 
   @Test
@@ -122,7 +128,7 @@ public class UserControllerTest {
    */
   private String asJsonString(final Object object) {
     try {
-      return new ObjectMapper().writeValueAsString(object);
+      return objectMapper.writeValueAsString(object);
     } catch (JsonProcessingException e) {
       throw new ResponseStatusException(
           HttpStatus.BAD_REQUEST,
