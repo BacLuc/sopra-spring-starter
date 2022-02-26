@@ -3,25 +3,22 @@ package ch.uzh.ifi.hase.soprafs22.controller;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.notNull;
-import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import ch.uzh.ifi.hase.soprafs22.constant.UserStatus;
 import ch.uzh.ifi.hase.soprafs22.entity.User;
+import ch.uzh.ifi.hase.soprafs22.repository.UserRepository;
+import ch.uzh.ifi.hase.soprafs22.rest.dto.UserGetDTO;
 import ch.uzh.ifi.hase.soprafs22.rest.dto.UserPostDTO;
-import ch.uzh.ifi.hase.soprafs22.service.UserService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -45,9 +42,9 @@ public class UserControllerTest {
 
   @Autowired private MockMvc mockMvc;
 
-  @MockBean private UserService userService;
-
   @MockBean private AuthHelper authHelper;
+
+  @Autowired private UserRepository userRepository;
 
   @Autowired private ObjectMapper objectMapper;
 
@@ -55,11 +52,16 @@ public class UserControllerTest {
 
   @BeforeEach
   void setUp() {
+    userRepository.deleteAll();
     user1 = new User();
     user1.setName("Firstname Lastname");
     user1.setUsername("firstname@lastname");
     user1.setStatus(UserStatus.OFFLINE);
     user1.setBirthday(SOME_BIRTHDAY);
+    user1.setPasswordHash("hash");
+    user1.setToken("token");
+    userRepository.save(user1);
+    userRepository.flush();
 
     when(authHelper.createCookieFor(notNull(), notNull()))
         .thenReturn(ResponseCookie.from("jwtCookieName", "jwt").build());
@@ -73,8 +75,7 @@ public class UserControllerTest {
   @Test
   @WithMockUser
   public void givenUsers_whenGetUsers_thenReturnJsonArray() throws Exception {
-    given(userService.getUsers()).willReturn(List.of(user1));
-
+    List<User> allUsers = userRepository.findAll();
     // when
     MockHttpServletRequestBuilder getRequest =
         get("/users").contentType(MediaType.APPLICATION_JSON);
@@ -84,6 +85,7 @@ public class UserControllerTest {
         .perform(getRequest)
         .andExpect(status().isOk())
         .andExpect(jsonPath("$", hasSize(1)))
+        .andExpect(jsonPath("$[0].id", is(allUsers.get(0).getId().intValue())))
         .andExpect(jsonPath("$[0].name", is(user1.getName())))
         .andExpect(jsonPath("$[0].username", is(user1.getUsername())))
         .andExpect(jsonPath("$[0].status", is(user1.getStatus().toString())))
@@ -98,16 +100,24 @@ public class UserControllerTest {
   @Test
   @WithMockUser
   public void httpstatus_404_for_get_user_item_when_not_found() throws Exception {
-    mockMvc.perform(get("/users/1")).andExpect(status().isNotFound());
+    mockMvc.perform(get("/users/2")).andExpect(status().isNotFound());
   }
 
   @Test
   @WithMockUser
-  public void return_200_and_single_user() throws Exception {
-    given(userService.getById(1L)).willReturn(Optional.of(user1));
+  public void return_200_and_single_user_if_valid() throws Exception {
+    String response =
+        mockMvc
+            .perform(get("/users"))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+    UserGetDTO[] userGetDTOs = objectMapper.readValue(response, UserGetDTO[].class);
 
     mockMvc
-        .perform(get("/users/1"))
+        .perform(get("/users/%s".formatted(userGetDTOs[0].getId())))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.name", is(user1.getName())))
         .andExpect(jsonPath("$.username", is(user1.getUsername())))
@@ -117,20 +127,10 @@ public class UserControllerTest {
 
   @Test
   public void createUser_validInput_userCreated() throws Exception {
-    // given
-    User user = new User();
-    user.setId(1L);
-    user.setName("Test User");
-    user.setUsername("testUsername");
-    user.setToken("1");
-    user.setStatus(UserStatus.ONLINE);
-
     UserPostDTO userPostDTO = new UserPostDTO();
     userPostDTO.setName("Test User");
     userPostDTO.setUsername("testUsername");
     userPostDTO.setPassword("test");
-
-    given(userService.createUser(Mockito.any())).willReturn(user);
 
     // when/then -> do the request + validate the result
     MockHttpServletRequestBuilder postRequest =
@@ -140,10 +140,10 @@ public class UserControllerTest {
     mockMvc
         .perform(postRequest)
         .andExpect(status().isCreated())
-        .andExpect(jsonPath("$.id", is(user.getId().intValue())))
-        .andExpect(jsonPath("$.name", is(user.getName())))
-        .andExpect(jsonPath("$.username", is(user.getUsername())))
-        .andExpect(jsonPath("$.status", is(user.getStatus().toString())));
+        .andExpect(jsonPath("$.id", is(3)))
+        .andExpect(jsonPath("$.name", is(userPostDTO.getName())))
+        .andExpect(jsonPath("$.username", is(userPostDTO.getUsername())))
+        .andExpect(jsonPath("$.status", is(UserStatus.OFFLINE.name())));
   }
 
   /**
