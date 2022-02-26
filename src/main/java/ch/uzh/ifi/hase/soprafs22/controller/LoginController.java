@@ -27,10 +27,10 @@ public class LoginController {
 
   @PostMapping("/login")
   public ResponseEntity<UserGetDTO> login(@Valid @RequestBody LoginDTO loginDTO) {
-    ResponseCookie responseCookie =
-        authHelper.createCookieFor(loginDTO.getUsername(), loginDTO.getPassword());
     User byUsername = userRepository.findByUsername(loginDTO.getUsername());
     UserGetDTO userGetDTO = DTOMapper.INSTANCE.convertEntityToUserGetDTO(byUsername);
+    ResponseCookie responseCookie =
+        authHelper.createCookieFor(byUsername.getId().toString(), loginDTO.getPassword());
     return ResponseEntity.ok()
         .header(HttpHeaders.SET_COOKIE, responseCookie.toString())
         .body(userGetDTO);

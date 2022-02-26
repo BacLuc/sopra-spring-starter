@@ -21,10 +21,10 @@ public class AuthHelper {
     this.jwtUtil = jwtUtil;
   }
 
-  public ResponseCookie createCookieFor(String username, String password) {
+  public ResponseCookie createCookieFor(String userId, String password) {
     Authentication authentication =
         authenticationManager.authenticate(
-            new UsernamePasswordAuthenticationToken(username, password));
+            new UsernamePasswordAuthenticationToken(userId, password));
     SecurityContextHolder.getContext().setAuthentication(authentication);
     UserDetails principal = (UserDetails) authentication.getPrincipal();
     return jwtUtil.generateJwtCookie(principal);

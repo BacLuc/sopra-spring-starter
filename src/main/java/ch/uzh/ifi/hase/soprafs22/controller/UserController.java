@@ -79,7 +79,8 @@ public class UserController {
 
     // convert internal representation of user back to API
     UserGetDTO userGetDTO = DTOMapper.INSTANCE.convertEntityToUserGetDTO(createdUser);
-    ResponseCookie cookie = authHelper.createCookieFor(userPostDTO.getUsername(), loginPassword);
+    ResponseCookie cookie =
+        authHelper.createCookieFor(createdUser.getId().toString(), loginPassword);
     return ResponseEntity.status(HttpStatus.CREATED)
         .header(HttpHeaders.SET_COOKIE, cookie.toString())
         .body(userGetDTO);

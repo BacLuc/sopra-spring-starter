@@ -41,11 +41,10 @@ public class AuthTokenFilter extends OncePerRequestFilter {
       throws ServletException, IOException {
     String jwtFromCookies = jwtUtil.getJwtFromCookies(request);
     if (jwtFromCookies != null && jwtUtil.validateJwtToken(jwtFromCookies)) {
-      String username = jwtUtil.getUserNameFromJwtToken(jwtFromCookies);
-      UserDetails userDetails = userDetailService.loadUserByUsername(username);
+      String userId = jwtUtil.getUserIdFromJwtToken(jwtFromCookies);
+      UserDetails userDetails = userDetailService.loadUserByUsername(userId);
       Optional.ofNullable(userDetails)
-          .orElseThrow(
-              () -> new UsernameNotFoundException("User %s not found".formatted(username)));
+          .orElseThrow(() -> new UsernameNotFoundException("User %s not found".formatted(userId)));
       UsernamePasswordAuthenticationToken authentication =
           new UsernamePasswordAuthenticationToken(
               userDetails, null, List.of(new SimpleGrantedAuthority(Authorities.ROLE_USER.name())));

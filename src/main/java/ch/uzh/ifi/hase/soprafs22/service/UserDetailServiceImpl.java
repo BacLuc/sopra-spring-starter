@@ -4,7 +4,6 @@ import ch.uzh.ifi.hase.soprafs22.repository.UserRepository;
 import ch.uzh.ifi.hase.soprafs22.security.Authorities;
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -24,8 +23,9 @@ public class UserDetailServiceImpl implements UserDetailsService {
   }
 
   @Override
-  public UserDetails loadUserByUsername(String username) {
-    return Optional.ofNullable(userRepository.findByUsername(username))
+  public UserDetails loadUserByUsername(String id) {
+    return userRepository
+        .findById(Long.parseLong(id))
         .map(
             user ->
                 new UserDetails() {
@@ -41,7 +41,7 @@ public class UserDetailServiceImpl implements UserDetailsService {
 
                   @Override
                   public String getUsername() {
-                    return user.getUsername();
+                    return user.getId().toString();
                   }
 
                   @Override
@@ -65,8 +65,6 @@ public class UserDetailServiceImpl implements UserDetailsService {
                   }
                 })
         .orElseThrow(
-            () ->
-                new UsernameNotFoundException(
-                    "User not found with username %s".formatted(username)));
+            () -> new UsernameNotFoundException("User not found with username %s".formatted(id)));
   }
 }
