@@ -10,6 +10,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 
+import java.util.Date;
+
 @DataJpaTest
 public class UserRepositoryIntegrationTest {
 
@@ -26,6 +28,7 @@ public class UserRepositoryIntegrationTest {
     user.setStatus(UserStatus.OFFLINE);
     user.setToken("1");
     user.setPasswordHash("passwordHash");
+    user.setCreated(new Date());
 
     entityManager.persist(user);
     entityManager.flush();

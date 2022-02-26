@@ -190,6 +190,24 @@ public class UserControllerTest {
   }
 
   @Test
+  public void createUser_rejects_existing_user_name() throws Exception {
+    UserPostDTO userPostDTO = new UserPostDTO();
+    userPostDTO.setName("Test User");
+    userPostDTO.setUsername(user1.getUsername());
+    userPostDTO.setPassword("test");
+
+    // when/then -> do the request + validate the result
+    MockHttpServletRequestBuilder postRequest =
+        post("/users")
+            .contentType(APPLICATION_JSON)
+            .accept(APPLICATION_JSON)
+            .content(asJsonString(userPostDTO));
+
+    // then
+    mockMvc.perform(postRequest).andExpect(status().isConflict());
+  }
+
+  @Test
   public void httpstatus_401_for_put_user_item_when_not_logged_in() throws Exception {
     mockMvc
         .perform(put("/users/1").accept(APPLICATION_JSON).contentType(APPLICATION_JSON).content(""))
