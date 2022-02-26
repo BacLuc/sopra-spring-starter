@@ -17,8 +17,8 @@ import ch.uzh.ifi.hase.soprafs22.service.UserService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDate;
-import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -51,27 +51,29 @@ public class UserControllerTest {
 
   @Autowired private ObjectMapper objectMapper;
 
+  private User user1;
+
   @BeforeEach
   void setUp() {
+    user1 = new User();
+    user1.setName("Firstname Lastname");
+    user1.setUsername("firstname@lastname");
+    user1.setStatus(UserStatus.OFFLINE);
+    user1.setBirthday(SOME_BIRTHDAY);
+
     when(authHelper.createCookieFor(notNull(), notNull()))
         .thenReturn(ResponseCookie.from("jwtCookieName", "jwt").build());
   }
 
   @Test
+  public void httpstatus_401_for_get_users_when_not_logged_in() throws Exception {
+    mockMvc.perform(get("/users")).andExpect(status().isUnauthorized());
+  }
+
+  @Test
   @WithMockUser
   public void givenUsers_whenGetUsers_thenReturnJsonArray() throws Exception {
-    // given
-    User user = new User();
-    user.setName("Firstname Lastname");
-    user.setUsername("firstname@lastname");
-    user.setStatus(UserStatus.OFFLINE);
-    user.setBirthday(SOME_BIRTHDAY);
-
-    List<User> allUsers = Collections.singletonList(user);
-
-    // this mocks the UserService -> we define above what the userService should
-    // return when getUsers() is called
-    given(userService.getUsers()).willReturn(allUsers);
+    given(userService.getUsers()).willReturn(List.of(user1));
 
     // when
     MockHttpServletRequestBuilder getRequest =
@@ -82,10 +84,35 @@ public class UserControllerTest {
         .perform(getRequest)
         .andExpect(status().isOk())
         .andExpect(jsonPath("$", hasSize(1)))
-        .andExpect(jsonPath("$[0].name", is(user.getName())))
-        .andExpect(jsonPath("$[0].username", is(user.getUsername())))
-        .andExpect(jsonPath("$[0].status", is(user.getStatus().toString())))
-        .andExpect(jsonPath("$[0].birthday", is(user.getBirthday().toString())));
+        .andExpect(jsonPath("$[0].name", is(user1.getName())))
+        .andExpect(jsonPath("$[0].username", is(user1.getUsername())))
+        .andExpect(jsonPath("$[0].status", is(user1.getStatus().toString())))
+        .andExpect(jsonPath("$[0].birthday", is(user1.getBirthday().toString())));
+  }
+
+  @Test
+  public void httpstatus_401_for_get_user_item_when_not_logged_in() throws Exception {
+    mockMvc.perform(get("/users/1")).andExpect(status().isUnauthorized());
+  }
+
+  @Test
+  @WithMockUser
+  public void httpstatus_404_for_get_user_item_when_not_found() throws Exception {
+    mockMvc.perform(get("/users/1")).andExpect(status().isNotFound());
+  }
+
+  @Test
+  @WithMockUser
+  public void return_200_and_single_user() throws Exception {
+    given(userService.getById(1L)).willReturn(Optional.of(user1));
+
+    mockMvc
+        .perform(get("/users/1"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.name", is(user1.getName())))
+        .andExpect(jsonPath("$.username", is(user1.getUsername())))
+        .andExpect(jsonPath("$.status", is(user1.getStatus().toString())))
+        .andExpect(jsonPath("$.birthday", is(user1.getBirthday().toString())));
   }
 
   @Test
