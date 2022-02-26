@@ -3,7 +3,10 @@ package ch.uzh.ifi.hase.soprafs22.entity;
 import ch.uzh.ifi.hase.soprafs22.constant.UserStatus;
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.util.Date;
 import javax.persistence.*;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 /**
  * Internal User Representation This class composes the internal representation of the user and
@@ -13,6 +16,7 @@ import javax.persistence.*;
  */
 @Entity
 @Table(name = "USER")
+@EntityListeners(AuditingEntityListener.class)
 public class User implements Serializable {
 
   private static final long serialVersionUID = 1L;
@@ -35,6 +39,10 @@ public class User implements Serializable {
 
   @Column(nullable = false)
   private UserStatus status;
+
+  @CreatedDate
+  @Column(nullable = false)
+  private Date created;
 
   public Long getId() {
     return id;
@@ -90,5 +98,13 @@ public class User implements Serializable {
 
   public void setPasswordHash(String passwordHash) {
     this.passwordHash = passwordHash;
+  }
+
+  public Date getCreated() {
+    return created;
+  }
+
+  public void setCreated(Date created) {
+    this.created = created;
   }
 }

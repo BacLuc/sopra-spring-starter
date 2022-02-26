@@ -183,10 +183,11 @@ public class UserControllerTest {
         .perform(postRequest)
         .andExpect(status().isCreated())
         .andExpect(header().string(CONTENT_TYPE, APPLICATION_JSON.toString()))
-        .andExpect(jsonPath("$.id", is(3)))
+        .andExpect(jsonPath("$.id", is(notNullValue())))
         .andExpect(jsonPath("$.name", is(userPostDTO.getName())))
         .andExpect(jsonPath("$.username", is(userPostDTO.getUsername())))
-        .andExpect(jsonPath("$.status", is(UserStatus.OFFLINE.name())));
+        .andExpect(jsonPath("$.status", is(UserStatus.OFFLINE.name())))
+        .andExpect(jsonPath("$.creation_date", is(notNullValue())));
   }
 
   @Test
