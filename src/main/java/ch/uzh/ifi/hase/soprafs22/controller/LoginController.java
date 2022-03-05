@@ -38,11 +38,16 @@ public class LoginController {
   @PostMapping("/login")
   public ResponseEntity<UserGetDTO> login(@Valid @RequestBody LoginDTO loginDTO) {
     User byUsername = userRepository.findByUsername(loginDTO.getUsername());
-    byUsername.setStatus(UserStatus.ONLINE);
-    userService.saveUser(byUsername);
+    if (byUsername == null) {
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+    }
+
     UserGetDTO userGetDTO = DTOMapper.INSTANCE.convertEntityToUserGetDTO(byUsername);
     ResponseCookie responseCookie =
         authHelper.createCookieFor(byUsername.getId().toString(), loginDTO.getPassword());
+
+    byUsername.setStatus(UserStatus.ONLINE);
+    userService.saveUser(byUsername);
 
     return ResponseEntity.ok()
         .header(HttpHeaders.SET_COOKIE, responseCookie.toString())
