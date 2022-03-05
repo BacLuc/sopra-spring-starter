@@ -69,7 +69,10 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         .antMatchers(h2ConsolePath + "/**")
         .permitAll()
         .anyRequest()
-        .authenticated();
+        .authenticated()
+        .and()
+        .logout()
+        .disable();
     http.headers().frameOptions().sameOrigin();
     http.addFilterBefore(authTokenFilter, UsernamePasswordAuthenticationFilter.class);
   }

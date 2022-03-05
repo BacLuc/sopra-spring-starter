@@ -1,6 +1,5 @@
 package ch.uzh.ifi.hase.soprafs22.rest.dto;
 
-import ch.uzh.ifi.hase.soprafs22.constant.UserStatus;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.LocalDate;
@@ -15,7 +14,8 @@ public class UserGetDTO {
   @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
   private LocalDate birthday;
 
-  private UserStatus status;
+  @JsonProperty("logged_in")
+  private boolean online;
 
   @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss Z")
   @JsonProperty("creation_date")
@@ -53,12 +53,12 @@ public class UserGetDTO {
     this.birthday = birthday;
   }
 
-  public UserStatus getStatus() {
-    return status;
+  public boolean isOnline() {
+    return online;
   }
 
-  public void setStatus(UserStatus status) {
-    this.status = status;
+  public void setOnline(boolean online) {
+    this.online = online;
   }
 
   public Date getCreated() {

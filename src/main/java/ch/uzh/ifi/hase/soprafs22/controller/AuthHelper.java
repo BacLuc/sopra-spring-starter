@@ -29,4 +29,8 @@ public class AuthHelper {
     UserDetails principal = (UserDetails) authentication.getPrincipal();
     return jwtUtil.generateJwtCookie(principal);
   }
+
+  public ResponseCookie createCleanCookie() {
+    return jwtUtil.getCleanJwtCookie();
+  }
 }

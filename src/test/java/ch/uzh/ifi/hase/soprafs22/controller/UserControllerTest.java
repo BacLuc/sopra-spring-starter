@@ -96,7 +96,7 @@ public class UserControllerTest {
         .andExpect(jsonPath("$[0].id", is(allUsers.get(0).getId().intValue())))
         .andExpect(jsonPath("$[0].name", is(user1.getName())))
         .andExpect(jsonPath("$[0].username", is(user1.getUsername())))
-        .andExpect(jsonPath("$[0].status", is(user1.getStatus().toString())))
+        .andExpect(jsonPath("$[0].logged_in", is(false)))
         .andExpect(jsonPath("$[0].birthday", is(user1.getBirthday().toString())));
   }
 
@@ -138,7 +138,7 @@ public class UserControllerTest {
         .andExpect(header().string(CONTENT_TYPE, APPLICATION_JSON.toString()))
         .andExpect(jsonPath("$.name", is(user1.getName())))
         .andExpect(jsonPath("$.username", is(user1.getUsername())))
-        .andExpect(jsonPath("$.status", is(user1.getStatus().toString())))
+        .andExpect(jsonPath("$.logged_in", is(false)))
         .andExpect(jsonPath("$.birthday", is(user1.getBirthday().toString())));
   }
 
@@ -186,7 +186,7 @@ public class UserControllerTest {
         .andExpect(jsonPath("$.id", is(notNullValue())))
         .andExpect(jsonPath("$.name", is(userPostDTO.getName())))
         .andExpect(jsonPath("$.username", is(userPostDTO.getUsername())))
-        .andExpect(jsonPath("$.status", is(UserStatus.OFFLINE.name())))
+        .andExpect(jsonPath("$.logged_in", is(true)))
         .andExpect(jsonPath("$.creation_date", is(notNullValue())));
   }
 

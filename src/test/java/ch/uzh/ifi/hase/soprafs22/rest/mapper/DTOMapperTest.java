@@ -1,6 +1,6 @@
 package ch.uzh.ifi.hase.soprafs22.rest.mapper;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 import ch.uzh.ifi.hase.soprafs22.constant.UserStatus;
 import ch.uzh.ifi.hase.soprafs22.entity.User;
@@ -44,6 +44,6 @@ public class DTOMapperTest {
     assertEquals(user.getId(), userGetDTO.getId());
     assertEquals(user.getName(), userGetDTO.getName());
     assertEquals(user.getUsername(), userGetDTO.getUsername());
-    assertEquals(user.getStatus(), userGetDTO.getStatus());
+    assertFalse(userGetDTO.isOnline());
   }
 }

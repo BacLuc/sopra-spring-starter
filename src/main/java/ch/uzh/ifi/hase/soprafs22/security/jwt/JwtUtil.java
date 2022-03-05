@@ -40,7 +40,7 @@ public class JwtUtil {
   }
 
   public ResponseCookie getCleanJwtCookie() {
-    return ResponseCookie.from(jwtCookieName, "").path("/api").build();
+    return ResponseCookie.from(jwtCookieName, "").build();
   }
 
   public String getUserIdFromJwtToken(String token) {
