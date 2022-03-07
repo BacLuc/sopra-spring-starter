@@ -12,6 +12,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -39,20 +40,35 @@ public class AuthTokenFilter extends OncePerRequestFilter {
   protected void doFilterInternal(
       HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
       throws ServletException, IOException {
-    String jwtFromCookies = jwtUtil.getJwtFromCookies(request);
-    if (jwtFromCookies != null && jwtUtil.validateJwtToken(jwtFromCookies)) {
-      String userId = jwtUtil.getUserIdFromJwtToken(jwtFromCookies);
-      UserDetails userDetails = userDetailService.loadUserByUsername(userId);
-      Optional.ofNullable(userDetails)
-          .orElseThrow(() -> new UsernameNotFoundException("User %s not found".formatted(userId)));
-      UsernamePasswordAuthenticationToken authentication =
-          new UsernamePasswordAuthenticationToken(
-              userDetails, null, List.of(new SimpleGrantedAuthority(Authorities.ROLE_USER.name())));
-      authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-      SecurityContextHolder.getContext().setAuthentication(authentication);
+    String authorization = request.getHeader(HttpHeaders.AUTHORIZATION);
+    if (authorization != null) {
+      validateAuthorizationHeader(request, authorization);
     } else {
       log.warn("not authenticated");
     }
     filterChain.doFilter(request, response);
+  }
+
+  private void validateAuthorizationHeader(HttpServletRequest request, String authorizationHeader) {
+    String[] parts = authorizationHeader.split(" ");
+    if (parts.length != 2) {
+      return;
+    }
+    if (!parts[0].equals("Bearer")) {
+      return;
+    }
+    String token = parts[1];
+    if (!jwtUtil.validateJwtToken(token)) {
+      return;
+    }
+    String userId = jwtUtil.getUserIdFromJwtToken(token);
+    UserDetails userDetails = userDetailService.loadUserByUsername(userId);
+    Optional.ofNullable(userDetails)
+        .orElseThrow(() -> new UsernameNotFoundException("User %s not found".formatted(userId)));
+    UsernamePasswordAuthenticationToken authentication =
+        new UsernamePasswordAuthenticationToken(
+            userDetails, null, List.of(new SimpleGrantedAuthority(Authorities.ROLE_USER.name())));
+    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+    SecurityContextHolder.getContext().setAuthentication(authentication);
   }
 }

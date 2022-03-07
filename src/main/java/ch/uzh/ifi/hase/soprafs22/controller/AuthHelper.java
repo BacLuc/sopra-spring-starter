@@ -2,7 +2,6 @@ package ch.uzh.ifi.hase.soprafs22.controller;
 
 import ch.uzh.ifi.hase.soprafs22.security.jwt.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -21,16 +20,12 @@ public class AuthHelper {
     this.jwtUtil = jwtUtil;
   }
 
-  public ResponseCookie createCookieFor(String userId, String password) {
+  public String createTokenFor(String userId, String password) {
     Authentication authentication =
         authenticationManager.authenticate(
             new UsernamePasswordAuthenticationToken(userId, password));
     SecurityContextHolder.getContext().setAuthentication(authentication);
     UserDetails principal = (UserDetails) authentication.getPrincipal();
-    return jwtUtil.generateJwtCookie(principal);
-  }
-
-  public ResponseCookie createCleanCookie() {
-    return jwtUtil.getCleanJwtCookie();
+    return jwtUtil.generateToken(principal);
   }
 }

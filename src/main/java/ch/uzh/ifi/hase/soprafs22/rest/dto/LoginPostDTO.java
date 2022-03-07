@@ -2,7 +2,7 @@ package ch.uzh.ifi.hase.soprafs22.rest.dto;
 
 import javax.validation.constraints.NotBlank;
 
-public class LoginDTO {
+public class LoginPostDTO {
   @NotBlank private String username;
 
   @NotBlank private String password;

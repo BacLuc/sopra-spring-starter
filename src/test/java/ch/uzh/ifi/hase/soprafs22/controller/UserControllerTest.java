@@ -2,8 +2,6 @@ package ch.uzh.ifi.hase.soprafs22.controller;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
-import static org.mockito.ArgumentMatchers.notNull;
-import static org.mockito.Mockito.when;
 import static org.springframework.http.HttpHeaders.CONTENT_TYPE;
 import static org.springframework.http.MediaType.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -24,9 +22,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseCookie;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
@@ -43,8 +39,6 @@ public class UserControllerTest {
   private static final LocalDate ANOTHER_BIRTHDAY = LocalDate.parse("2022-01-03");
 
   @Autowired private MockMvc mockMvc;
-
-  @MockBean private AuthHelper authHelper;
 
   @Autowired private UserRepository userRepository;
 
@@ -64,9 +58,6 @@ public class UserControllerTest {
     user1.setToken("token");
     userRepository.save(user1);
     userRepository.flush();
-
-    when(authHelper.createCookieFor(notNull(), notNull()))
-        .thenReturn(ResponseCookie.from("jwtCookieName", "jwt").build());
   }
 
   @Test

@@ -3,44 +3,23 @@ package ch.uzh.ifi.hase.soprafs22.security.jwt;
 import io.jsonwebtoken.*;
 import java.time.Duration;
 import java.util.Date;
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
-import org.springframework.web.util.WebUtils;
 
 @Component
 public class JwtUtil {
   private static final Logger log = LoggerFactory.getLogger(JwtUtil.class);
-
-  @Value("${jwt.cookie.name}")
-  private String jwtCookieName;
 
   @Value("${jwt.secret}")
   private String jwtSecret;
 
   private long jwtExpirationMs = Duration.ofDays(1).getSeconds() * 1000;
 
-  public String getJwtFromCookies(HttpServletRequest request) {
-    Cookie cookie = WebUtils.getCookie(request, jwtCookieName);
-    if (cookie != null) {
-      return cookie.getValue();
-    } else {
-      return null;
-    }
-  }
-
-  public ResponseCookie generateJwtCookie(UserDetails userPrincipal) {
-    String jwt = generateTokenFromUsername(userPrincipal.getUsername());
-    return ResponseCookie.from(jwtCookieName, jwt).maxAge(24 * 60 * 60).httpOnly(false).build();
-  }
-
-  public ResponseCookie getCleanJwtCookie() {
-    return ResponseCookie.from(jwtCookieName, "").build();
+  public String generateToken(UserDetails userPrincipal) {
+    return generateTokenFromUsername(userPrincipal.getUsername());
   }
 
   public String getUserIdFromJwtToken(String token) {
