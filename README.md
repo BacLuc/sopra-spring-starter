@@ -1,5 +1,14 @@
 # SoPra RESTful Service Template FS22
 
+## SonarCloud Badges:
+
+[![Bugs](https://sonarcloud.io/api/project_badges/measure?project=BacLuc_sopra-spring-starter&metric=bugs)](https://sonarcloud.io/summary/new_code?id=BacLuc_sopra-spring-starter)
+[![Code Smells](https://sonarcloud.io/api/project_badges/measure?project=BacLuc_sopra-spring-starter&metric=code_smells)](https://sonarcloud.io/summary/new_code?id=BacLuc_sopra-spring-starter)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=BacLuc_sopra-spring-starter&metric=coverage)](https://sonarcloud.io/summary/new_code?id=BacLuc_sopra-spring-starter)
+[![Alert Status](https://sonarcloud.io/api/project_badges/measure?project=BacLuc_sopra-spring-starter&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=BacLuc_sopra-spring-starter)
+[![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=BacLuc_sopra-spring-starter&metric=vulnerabilities)](https://sonarcloud.io/summary/new_code?id=BacLuc_sopra-spring-starter)
+
+
 ## Getting started with Spring Boot
 
 -   Documentation: https://docs.spring.io/spring-boot/docs/current/reference/html/index.html
